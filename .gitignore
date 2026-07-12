@@ -22,3 +22,5 @@ Thumbs.db
 *.crc
 _SUCCESS
 
+data/raw/
+reports/superset_exports/*.crc
