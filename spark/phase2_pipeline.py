@@ -43,6 +43,69 @@ orders_enriched = (
 
 orders_enriched.write.mode("overwrite").parquet(f"{output_base}/orders_enriched")
 
-print("Phase 2 base enriched table written successfully.")
+monthly_sales = (
+    orders_enriched
+    .filter(col("order_purchase_timestamp").isNotNull())
+    .withColumn("order_month", date_format(col("order_purchase_timestamp"), "yyyy-MM"))
+    .groupBy("order_month")
+    .agg(
+        count("order_id").alias("total_orders"),
+        round(sum("payment_value"), 2).alias("total_revenue"),
+        round(avg("payment_value"), 2).alias("average_payment")
+    )
+    .orderBy("order_month")
+)
+
+payment_summary = (
+    orders_enriched
+    .groupBy("payment_type")
+    .agg(
+        count("order_id").alias("total_orders"),
+        round(sum("payment_value"), 2).alias("total_revenue"),
+        round(avg("payment_value"), 2).alias("average_payment")
+    )
+    .orderBy(col("total_revenue").desc())
+)
+
+category_sales = (
+    orders_enriched
+    .filter(col("product_category_name").isNotNull())
+    .groupBy("product_category_name")
+    .agg(
+        count("order_id").alias("total_orders"),
+        round(sum("payment_value"), 2).alias("total_revenue"),
+        round(avg("payment_value"), 2).alias("average_payment")
+    )
+    .orderBy(col("total_revenue").desc())
+)
+
+state_orders = (
+    orders_enriched
+    .groupBy("customer_state")
+    .agg(
+        count("order_id").alias("total_orders"),
+        round(sum("payment_value"), 2).alias("total_revenue")
+    )
+    .orderBy(col("total_orders").desc())
+)
+
+delivery_performance = (
+    orders_enriched
+    .filter(col("delivery_days").isNotNull())
+    .groupBy("customer_state")
+    .agg(
+        count("order_id").alias("delivered_orders"),
+        round(avg("delivery_days"), 2).alias("average_delivery_days")
+    )
+    .orderBy(col("average_delivery_days").desc())
+)
+
+monthly_sales.write.mode("overwrite").parquet(f"{output_base}/monthly_sales")
+payment_summary.write.mode("overwrite").parquet(f"{output_base}/payment_summary")
+category_sales.write.mode("overwrite").parquet(f"{output_base}/category_sales")
+state_orders.write.mode("overwrite").parquet(f"{output_base}/state_orders")
+delivery_performance.write.mode("overwrite").parquet(f"{output_base}/delivery_performance")
+
+print("Phase 2 analytical datasets written successfully.")
 
 spark.stop()
