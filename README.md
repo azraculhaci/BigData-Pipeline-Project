@@ -205,3 +205,87 @@ Spark dashboard export job
       v
 Superset CSV datasets and dashboard
 ```
+## Phase 2 - Simple Data Pipeline
+
+In this phase, a simple Spark data pipeline was implemented for the Olist E-Commerce dataset.
+
+The pipeline reads the raw CSV files, processes them with Apache Spark, and writes the output as Parquet files. This creates a reusable data layer for later analytics and visualization steps.
+
+### Pipeline Steps
+
+1. Read the Olist CSV files from `data/raw/`.
+2. Load the files into Apache Spark DataFrames.
+3. Apply basic schema inference and ingestion metadata.
+4. Write each table as Parquet output.
+5. Store the generated files in the project output/data layer.
+
+### Input Dataset
+
+The following Olist CSV tables are used:
+
+- `olist_customers_dataset.csv`
+- `olist_geolocation_dataset.csv`
+- `olist_order_items_dataset.csv`
+- `olist_order_payments_dataset.csv`
+- `olist_order_reviews_dataset.csv`
+- `olist_orders_dataset.csv`
+- `olist_products_dataset.csv`
+- `olist_sellers_dataset.csv`
+- `product_category_name_translation.csv`
+
+### Output
+
+The processed datasets are written in Parquet format.
+
+Example output structure:
+
+```text
+data/processed/
+├── customers/
+├── geolocation/
+├── order_items/
+├── order_payments/
+├── order_reviews/
+├── orders/
+├── products/
+├── sellers/
+└── product_category_translation/
+```
+
+# How to Run
+
+Start the required services:
+
+```bash
+docker compose -f docker/docker-compose-spark.yml up -d
+docker compose -f docker/docker-compose-hdfs.yml up -d
+docker compose -f docker/docker-compose-dev.yml up -d --build
+```
+
+Run the ingestion pipeline:
+
+```bash
+docker exec -it olist-dev python processing/ingest_to_bronze.py
+```
+
+# Verification
+
+After running the pipeline, verify that the Parquet files were successfully written to HDFS:
+
+```bash
+docker exec namenode hdfs dfs -ls /olist/bronze
+```
+
+Expected output:
+
+```text
+/olist/bronze/customers
+/olist/bronze/geolocation
+/olist/bronze/order_items
+/olist/bronze/order_payments
+/olist/bronze/order_reviews
+/olist/bronze/orders
+/olist/bronze/products
+/olist/bronze/sellers
+/olist/bronze/product_category_translation
+```
