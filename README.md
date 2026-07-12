@@ -289,3 +289,24 @@ Expected output:
 /olist/bronze/sellers
 /olist/bronze/product_category_translation
 ```
+## Phase 3 - Analytics Enhancement
+
+Phase 3 extends the pipeline by creating analytics-ready Gold datasets from the Bronze Parquet layer.
+
+The goal of this phase is to transform raw-oriented Bronze data into summarized datasets that can be used directly for dashboards and business analysis.
+
+### Gold Tables
+
+The following Gold datasets are generated:
+
+- `monthly_orders`
+- `payment_summary`
+- `category_sales`
+- `state_orders`
+- `delivery_performance`
+
+### How to Run
+
+```powershell
+docker cp processing/build_gold_analytics.py spark-master:/tmp/build_gold_analytics.py
+docker exec -it spark-master /spark/bin/spark-submit /tmp/build_gold_analytics.py
